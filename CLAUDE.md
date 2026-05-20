@@ -100,6 +100,7 @@ The only file edited per site is [site-config.php](firm-legal-schema-suite/firm-
 - `spanish_url_marker` — for multilingual sites without Polylang/WPML
 - `acf_author_name_field` / `acf_author_url_field` — ACF field *names* (not labels), found in WP admin → Custom Fields
 - `*_post_type` and `*_page_slug` — site-specific CPT slugs and page slugs
+- `pages.about_page.primary_attorney` — `name`, `job_title`, `image_url`, `image_caption`, `same_as[]` for the attorney mentioned on the About page. Drives the `Person` + `mentions` + (optionally) `#primaryimage` ImageObject. Leaving `name` blank suppresses the Person/mention silently.
 - `enabled_schemas` — feature flags per schema type
 - `default_image_url` — fallback featured image (empty = omit the field)
 

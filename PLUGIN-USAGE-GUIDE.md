@@ -169,6 +169,18 @@ Example for Austin Bankruptcy:
         'en' => 'about-us',
         'es' => 'sobre-nosotros',   // Verify in WP admin → Pages
     ),
+
+    // See "About page — primary attorney" below.
+    'primary_attorney' => array(
+        'name'          => 'Jane Doe',
+        'job_title'     => 'Founding Attorney',
+        'image_url'     => 'https://www.austinbankruptcylawyers.com/wp-content/uploads/.../jane-doe.webp',
+        'image_caption' => '',                // auto: "Jane Doe of Austin Bankruptcy Lawyers"
+        'same_as'       => array(
+            'https://www.avvo.com/attorneys/...',
+            'https://www.linkedin.com/in/...',
+        ),
+    ),
 ),
 'contact_page' => array(
     'slugs' => array(
@@ -181,6 +193,24 @@ Example for Austin Bankruptcy:
 ```
 
 **To find the actual slug** of any page: WP admin → **Pages** → hover over the page → look at the URL preview. The slug is the last path segment before the trailing slash. For `https://www.austinbankruptcylawyers.com/es/sobre-nosotros/`, the slug is `sobre-nosotros`.
+
+#### About page — primary attorney
+
+The About page emits a `Person` entity (the firm's main attorney / founding partner / CEO) and a `mentions` reference back to that Person from the `AboutPage`. The data lives entirely in `site-config.php` — there are no ACF fields to set in WP admin.
+
+Fields under `pages.about_page.primary_attorney`:
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | Yes — if blank, the Person + mention are silently omitted | Display name. The attorney `@id` is built as `home_url + '#attorney-' + sanitize_title(remove_accents(name))` and must match the dedicated attorney profile page. |
+| `job_title` | No (default `'Attorney'`) | E.g. `'Founding Partner'`, `'Managing Attorney'`, `'CEO'`. |
+| `image_url` | No | Direct URL to the attorney's headshot. When set, takes precedence over the About page's WP featured image for the `#primaryimage` ImageObject. |
+| `image_caption` | No | Caption text for the primary image. When blank and `image_url` is supplied, auto-built as `"{name} of {site name}"`. |
+| `same_as` | No | Array of profile URLs (Avvo, LinkedIn, State Bar listing, etc.). Invalid URLs are dropped silently. |
+
+**Behavior when `name` is blank:** the AboutPage still renders cleanly with the BreadcrumbList and (if the page has a WP featured image) an ImageObject — but the Person node and the `mentions` field are omitted. Use this for sites that don't profile a single attorney on the About page.
+
+**Behavior when `image_url` is blank:** the handler falls back to the About page's WP featured image (if any), reusing its caption.
 
 #### `policy_pages` — Privacy / Terms / Disclaimers
 

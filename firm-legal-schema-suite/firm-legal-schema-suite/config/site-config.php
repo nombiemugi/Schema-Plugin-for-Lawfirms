@@ -84,6 +84,42 @@ return array(
                 'en' => 'about-us',
                 'es' => 'sobre-nosotros',
             ),
+
+            /**
+             * Primary attorney mentioned on the About page. Drives the
+             * Person entity, the AboutPage.mentions reference, and
+             * (optionally) the primary image.
+             *
+             * Leave 'name' empty to suppress the Person/mention block
+             * entirely — the AboutPage will still render with the
+             * BreadcrumbList and the WP featured image (if any).
+             *
+             * The attorney @id is built as:
+             *   home_url + '#attorney-' + sanitize_title( remove_accents( name ) )
+             * It MUST match the @id used on the dedicated attorney
+             * profile page so the graph stays consistent.
+             */
+            'primary_attorney' => array(
+                // Display name, e.g. 'Michael Cindrich'. Required for emission.
+                'name'          => '',
+
+                // e.g. 'Attorney', 'Founding Partner', 'Managing Attorney', 'CEO'.
+                'job_title'     => 'Attorney',
+
+                // Optional direct URL to the attorney's headshot. When set,
+                // it takes precedence over the About page's WP featured image
+                // for the #primaryimage ImageObject.
+                'image_url'     => '',
+
+                // Optional caption for the primary image. When blank and an
+                // image_url is supplied, auto-built as "{name} of {site name}".
+                'image_caption' => '',
+
+                // Profile URLs (Avvo, LinkedIn, State Bar listing, etc.).
+                'same_as'       => array(
+                    // 'https://www.avvo.com/attorneys/...',
+                ),
+            ),
         ),
 
         'contact_page' => array(

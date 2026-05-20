@@ -8,10 +8,12 @@
  * Graph includes:
  *  - BreadcrumbList
  *  - AboutPage           — mainEntity → #organization
- *  - ImageObject         — primaryImageOfPage (when a featured image exists)
- *  - Person (optional)   — declared via AboutPage.mentions when the page
- *                          highlights a specific attorney whose @id lives
- *                          on the dedicated profile page
+ *  - ImageObject         — primaryImageOfPage (from config image_url
+ *                          when supplied, else the WP featured image)
+ *  - Person (optional)   — declared via AboutPage.mentions when a
+ *                          primary attorney is configured in
+ *                          site-config.php under
+ *                          pages.about_page.primary_attorney
  *
  * References sitewide #organization and #website by @id — never redefines.
  */
@@ -79,15 +81,15 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
             $entity['description'] = wp_strip_all_tags( $excerpt );
         }
 
-        if ( has_post_thumbnail( $this->post_id ) ) {
+        if ( $this->has_primary_image() ) {
             $entity['primaryImageOfPage'] = array(
                 '@id' => $this->permalink . '#primaryimage',
             );
         }
 
-        $person_id = $this->resolve_mentioned_person_id();
-        if ( $person_id ) {
-            $entity['mentions'] = array( '@id' => $person_id );
+        $attorney_id = $this->resolve_attorney_id();
+        if ( $attorney_id ) {
+            $entity['mentions'] = array( '@id' => $attorney_id );
         }
 
         return $this->clean_entity( $entity );
@@ -95,62 +97,81 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
 
 
     /**
-     * Build a primary image ImageObject when the page has a featured image.
+     * Build the #primaryimage ImageObject.
+     *
+     * Precedence:
+     *  1. primary_attorney.image_url from config
+     *  2. WP featured image on the About page
+     *  3. null (no ImageObject emitted)
      *
      * @return array|null
      */
     protected function build_primary_image() {
-        if ( ! has_post_thumbnail( $this->post_id ) ) {
-            return null;
+        $attorney = $this->get_primary_attorney();
+
+        if ( $attorney && ! empty( $attorney['image_url'] ) ) {
+            $caption = ! empty( $attorney['image_caption'] )
+                ? $attorney['image_caption']
+                : $attorney['name'] . ' of ' . get_bloginfo( 'name' );
+
+            return $this->clean_entity( array(
+                '@type'      => 'ImageObject',
+                '@id'        => $this->permalink . '#primaryimage',
+                'url'        => $attorney['image_url'],
+                'contentUrl' => $attorney['image_url'],
+                'caption'    => $caption,
+            ) );
         }
 
-        $image_url = get_the_post_thumbnail_url( $this->post_id, 'full' );
-        if ( empty( $image_url ) ) {
-            return null;
+        if ( has_post_thumbnail( $this->post_id ) ) {
+            $image_url = get_the_post_thumbnail_url( $this->post_id, 'full' );
+            if ( empty( $image_url ) ) {
+                return null;
+            }
+
+            $caption = get_the_post_thumbnail_caption( $this->post_id );
+
+            return $this->clean_entity( array(
+                '@type'      => 'ImageObject',
+                '@id'        => $this->permalink . '#primaryimage',
+                'url'        => $image_url,
+                'contentUrl' => $image_url,
+                'caption'    => ! empty( $caption ) ? $caption : null,
+            ) );
         }
 
-        $caption = get_the_post_thumbnail_caption( $this->post_id );
-
-        return $this->clean_entity( array(
-            '@type'      => 'ImageObject',
-            '@id'        => $this->permalink . '#primaryimage',
-            'url'        => $image_url,
-            'contentUrl' => $image_url,
-            'caption'    => ! empty( $caption ) ? $caption : null,
-        ) );
+        return null;
     }
 
 
     /**
-     * Build a lightweight Person entity for an attorney mentioned on the
-     * About page. The @id is the canonical sitewide attorney anchor — the
-     * full bio still lives on the dedicated profile page.
+     * Build the Person entity for the primary attorney mentioned on the
+     * page. The @id matches the canonical sitewide attorney anchor used
+     * on the dedicated profile page.
      *
-     * Returns null when no mention is configured or resolvable.
+     * Returns null when no primary_attorney is configured.
      *
      * @return array|null
      */
     protected function build_mentioned_person() {
-        $person_id = $this->resolve_mentioned_person_id();
-        if ( ! $person_id ) {
+        $attorney = $this->get_primary_attorney();
+        if ( ! $attorney ) {
             return null;
         }
 
-        $name    = $this->resolve_mentioned_person_name();
-        $sameAs  = $this->resolve_mentioned_person_sameas();
-        $image   = has_post_thumbnail( $this->post_id )
+        $image = $this->has_primary_image()
             ? array( '@id' => $this->permalink . '#primaryimage' )
             : null;
 
         $person = array(
             '@type'    => 'Person',
-            '@id'      => $person_id,
-            'name'     => $name,
-            'jobTitle' => 'Attorney',
+            '@id'      => $this->build_attorney_id( $attorney['name'] ),
+            'name'     => $attorney['name'],
+            'jobTitle' => ! empty( $attorney['job_title'] ) ? $attorney['job_title'] : 'Attorney',
             'url'      => $this->permalink,
             'image'    => $image,
             'worksFor' => $this->org_ref(),
-            'sameAs'   => ! empty( $sameAs ) ? $sameAs : null,
+            'sameAs'   => ! empty( $attorney['same_as'] ) ? $attorney['same_as'] : null,
         );
 
         return $this->clean_entity( $person );
@@ -158,62 +179,94 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
 
 
     /**
-     * Look for an ACF field that names the attorney mentioned on the page.
-     * Falls back to no mention if ACF isn't installed or the field is blank.
+     * Whether a #primaryimage ImageObject will be emitted for this page.
+     * Mirrors the precedence used in build_primary_image().
      *
-     * @return string|null Canonical attorney @id, or null.
+     * @return bool
      */
-    protected function resolve_mentioned_person_id() {
-        $name = $this->resolve_mentioned_person_name();
-        if ( empty( $name ) ) {
+    protected function has_primary_image() {
+        $attorney = $this->get_primary_attorney();
+        if ( $attorney && ! empty( $attorney['image_url'] ) ) {
+            return true;
+        }
+        return has_post_thumbnail( $this->post_id );
+    }
+
+
+    /**
+     * Resolve the @id of the mentioned attorney, or null when no
+     * primary_attorney name is configured.
+     *
+     * @return string|null
+     */
+    protected function resolve_attorney_id() {
+        $attorney = $this->get_primary_attorney();
+        if ( ! $attorney ) {
             return null;
         }
+        return $this->build_attorney_id( $attorney['name'] );
+    }
 
+
+    /**
+     * Build the canonical attorney @id from a display name.
+     * Matches the convention used by class-blog-posting.php and the
+     * eventual dedicated Attorney handler.
+     *
+     * @param string $name
+     * @return string
+     */
+    protected function build_attorney_id( $name ) {
         $slug = sanitize_title( remove_accents( $name ) );
         return $this->home_url . '#attorney-' . $slug;
     }
 
 
     /**
-     * @return string|null
+     * Read pages.about_page.primary_attorney from config and normalize.
+     * Returns null when no name is configured (suppresses Person + mention).
+     *
+     * @return array|null
      */
-    protected function resolve_mentioned_person_name() {
-        if ( ! function_exists( 'get_field' ) ) {
+    protected function get_primary_attorney() {
+        if ( empty( $this->config['pages']['about_page']['primary_attorney'] ) ) {
             return null;
         }
 
-        $name = get_field( 'about_page_mentioned_attorney', $this->post_id );
-        return ! empty( $name ) ? $name : null;
+        $raw  = $this->config['pages']['about_page']['primary_attorney'];
+        $name = isset( $raw['name'] ) ? trim( (string) $raw['name'] ) : '';
+        if ( $name === '' ) {
+            return null;
+        }
+
+        return array(
+            'name'          => $name,
+            'job_title'     => isset( $raw['job_title'] ) ? trim( (string) $raw['job_title'] ) : '',
+            'image_url'     => isset( $raw['image_url'] ) ? trim( (string) $raw['image_url'] ) : '',
+            'image_caption' => isset( $raw['image_caption'] ) ? trim( (string) $raw['image_caption'] ) : '',
+            'same_as'       => isset( $raw['same_as'] ) ? $this->sanitize_same_as( $raw['same_as'] ) : array(),
+        );
     }
 
 
     /**
-     * @return array Sanitized sameAs URLs from optional ACF field.
+     * Validate and normalize a sameAs list. Accepts an array of URL strings.
+     *
+     * @param mixed $value
+     * @return array
      */
-    protected function resolve_mentioned_person_sameas() {
-        if ( ! function_exists( 'get_field' ) ) {
-            return array();
-        }
-
-        $value = get_field( 'about_page_mentioned_attorney_sameas', $this->post_id );
+    protected function sanitize_same_as( $value ) {
         if ( empty( $value ) ) {
             return array();
         }
 
-        // Accept either a comma/newline-separated string or an array of URLs.
-        if ( is_string( $value ) ) {
-            $value = preg_split( '/[\r\n,]+/', $value );
-        }
-
         $clean = array();
         foreach ( (array) $value as $url ) {
-            $url = is_array( $url ) && isset( $url['url'] ) ? $url['url'] : $url;
             $url = trim( (string) $url );
             if ( $url !== '' && filter_var( $url, FILTER_VALIDATE_URL ) ) {
                 $clean[] = $url;
             }
         }
-
         return $clean;
     }
 }
