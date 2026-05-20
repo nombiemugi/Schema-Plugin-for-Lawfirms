@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name:       Law Firm Legal Schema Suite
- * Plugin URI:        https://yourwebsite.com
+ * Plugin URI:        https://www.almostillegalads.com
  * Description:       Outputs Schema.org structured data (JSON-LD) for law firm WordPress sites. Modular architecture supports BlogPosting, AboutPage, ContactPage (with optional ContactPoint), Testimonials, Video Library (VideoObject from ACF), Blog index, and policy pages (Privacy/Terms/Disclaimers). References sitewide #organization, #website, and #logo by @id — never redefines them. Bilingual slug detection (English + Spanish) with auto language resolution via Polylang, WPML, or URL pattern.
- * Version:           2.1.0
+ * Version:           2.1.3
  * Requires at least: 5.0
  * Requires PHP:      7.2
- * Author:            Your Agency Name
- * Author URI:        https://yourwebsite.com
+ * Author:            Andrés Soler from AIA
+ * Author URI:        https://www.almostillegalads.com
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       firm-legal-schema-suite
