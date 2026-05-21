@@ -170,7 +170,10 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
             'jobTitle' => ! empty( $attorney['job_title'] ) ? $attorney['job_title'] : 'Attorney',
             'url'      => $this->permalink,
             'image'    => $image,
-            'worksFor' => $this->org_ref(),
+            'worksFor' => array(
+                '@type' => array( 'LegalService' ),
+                '@id'   => $this->home_url . '#organization',
+            ),
             'sameAs'   => ! empty( $attorney['same_as'] ) ? $attorney['same_as'] : null,
         );
 
