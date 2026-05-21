@@ -57,9 +57,47 @@ return array(
     // CUSTOM POST TYPES
     // -----------------------------------------------------------------
 
+    /**
+     * Used when attorneys / practice areas / case results are registered as
+     * Custom Post Types. Leave empty (or unused) on sites that organize
+     * these as hierarchical WP pages — in that case configure
+     * attorney_parent_pages and practice_area_parent_pages below instead.
+     */
     'attorney_post_type'      => 'attorney',
     'practice_area_post_type' => 'practice_area',
     'case_result_post_type'   => 'case_result',
+
+
+    // -----------------------------------------------------------------
+    // HIERARCHICAL-PAGE STRUCTURE
+    // -----------------------------------------------------------------
+
+    /**
+     * For sites that organize attorneys and practice areas as
+     * hierarchical WP pages (NOT custom post types). The router will
+     * treat any child page of one of these parent slugs as an
+     * attorney / practice area page respectively.
+     *
+     * Leave 'slugs' empty (or this whole block out) on CPT-based sites.
+     *
+     * Example: on lincolngoldfinch.com, /meet-our-team/firstname-lastname/
+     * pages are attorneys, so the en slug is 'meet-our-team'. The Spanish
+     * equivalent should match the actual published Spanish page slug; the
+     * value below is a placeholder.
+     */
+    'attorney_parent_pages' => array(
+        'slugs' => array(
+            'en' => 'meet-our-team',
+            'es' => 'conoce-nuestro-equipo',
+        ),
+    ),
+
+    'practice_area_parent_pages' => array(
+        'slugs' => array(
+            'en' => 'practice-areas',
+            'es' => 'areas-de-practica',
+        ),
+    ),
 
 
     // -----------------------------------------------------------------
@@ -178,6 +216,103 @@ return array(
             ),
         ),
 
+        /**
+         * Listing pages for hierarchical-page sites. These typically share
+         * the slug with attorney_parent_pages / practice_area_parent_pages
+         * (the parent page IS the listing page) — the router falls back
+         * to those slugs when these blocks are left empty.
+         */
+        'meet_our_team' => array(
+            'slugs' => array(
+                'en' => 'meet-our-team',
+                'es' => 'conoce-nuestro-equipo',
+            ),
+        ),
+
+        'practice_areas_index' => array(
+            'slugs' => array(
+                'en' => 'practice-areas',
+                'es' => 'areas-de-practica',
+            ),
+        ),
+
+    ),
+
+
+    // -----------------------------------------------------------------
+    // GENERIC PAGES (single handler emits minimal WebPage + breadcrumb)
+    // -----------------------------------------------------------------
+
+    /**
+     * Pages that don't warrant a richer schema type — e.g. an
+     * "In the Media" page that only contains YouTube embeds, a Jobs
+     * page with no real openings, or a Blog index where listing
+     * the latest BlogPostings isn't valuable. Each entry produces a
+     * WebPage + BreadcrumbList when the current slug matches.
+     *
+     * Refusing to fabricate VideoObject or JobPosting metadata is
+     * intentional — both schemas have strict Google requirements
+     * (duration, employment type, etc.) that we can't honestly fill
+     * for these pages.
+     */
+    'generic_pages' => array(
+        array(
+            'key'   => 'in_the_media',
+            'slugs' => array( 'en' => 'in-the-media', 'es' => 'medios' ),
+        ),
+        array(
+            'key'   => 'jobs_page',
+            'slugs' => array( 'en' => 'jobs', 'es' => 'empleos' ),
+        ),
+        array(
+            'key'   => 'blog_index',
+            'slugs' => array( 'en' => 'blog', 'es' => 'blog' ),
+        ),
+    ),
+
+
+    // -----------------------------------------------------------------
+    // PRACTICE AREA SUBTOPICS (drives LegalService.hasOfferCatalog)
+    // -----------------------------------------------------------------
+
+    /**
+     * Per-practice-area sub-topic lists, keyed by the page slug. When
+     * a practice area page renders, the handler looks up its slug here
+     * and emits hasOfferCatalog → OfferCatalog → Offer[] entries.
+     *
+     * Leave the array empty (or omit a slug) to suppress hasOfferCatalog
+     * for that page — the LegalService entity still renders cleanly.
+     *
+     * 'area_served' is optional; omit to inherit from the sitewide
+     * #organization signal.
+     */
+    'practice_areas' => array(
+        // Example shape — override per site:
+        // 'family-immigration' => array(
+        //     'subtopics'   => array(
+        //         'Family-Based Green Cards',
+        //         'Fiancé(e) Visas',
+        //         'Adjustment of Status',
+        //         'Consular Processing',
+        //     ),
+        //     'area_served' => array( 'Texas', 'United States' ),
+        // ),
+    ),
+
+
+    // -----------------------------------------------------------------
+    // ATTORNEY OVERRIDES (optional per-attorney config)
+    // -----------------------------------------------------------------
+
+    /**
+     * Per-attorney overrides keyed by the attorney page slug. Currently
+     * only 'job_title' is honored — the rest of the Person entity is
+     * built from native WP data (title, content, featured image).
+     */
+    'attorneys' => array(
+        // 'kate-lincoln-goldfinch' => array(
+        //     'job_title' => 'Founding Partner',
+        // ),
     ),
 
 
@@ -221,16 +356,19 @@ return array(
      * Only enable schemas the site actually needs and has handlers built for.
      */
     'enabled_schemas' => array(
-        'blog_posting'   => true,
-        'attorney'       => false,
-        'practice_area'  => false,
-        'contact_page'   => false,
-        'about_page'     => false,
-        'testimonials'   => false,
-        'video_library'  => false,
-        'blog_index'     => false,
-        'faq_page'       => false,
-        'policy_pages'   => false,
+        'blog_posting'           => true,
+        'attorney'               => false,
+        'practice_area'          => false,
+        'team_listing'           => false,
+        'practice_areas_listing' => false,
+        'contact_page'           => false,
+        'about_page'             => false,
+        'testimonials'           => false,
+        'video_library'          => false,
+        'blog_index'             => false,
+        'faq_page'               => false,
+        'policy_pages'           => false,
+        'generic_pages'          => false,
     ),
 
 

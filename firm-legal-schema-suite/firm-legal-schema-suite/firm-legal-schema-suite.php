@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Law Firm Legal Schema Suite
  * Plugin URI:        https://www.almostillegalads.com
- * Description:       Outputs Schema.org structured data (JSON-LD) for law firm WordPress sites. Modular architecture supports BlogPosting, AboutPage, ContactPage (with optional ContactPoint), Testimonials, Video Library (VideoObject from ACF), Blog index, and policy pages (Privacy/Terms/Disclaimers). References sitewide #organization, #website, and #logo by @id — never redefines them. Bilingual slug detection (English + Spanish) with auto language resolution via Polylang, WPML, or URL pattern.
- * Version:           2.1.3
+ * Description:       Outputs Schema.org structured data (JSON-LD) for law firm WordPress sites. Modular architecture supports BlogPosting, AboutPage, ContactPage, Attorney (Person), Practice Area (LegalService + OfferCatalog), Team listing, Practice Areas listing, Testimonials, Video Library, Blog index, policy pages (Privacy/Terms/Disclaimers), and generic listing pages. Supports both Custom Post Type and hierarchical-page site structures. References sitewide #organization, #website, and #logo by @id — never redefines them. Bilingual slug detection (English + Spanish) with auto language resolution via Polylang, WPML, or URL pattern.
+ * Version:           2.2.0
  * Requires at least: 5.0
  * Requires PHP:      7.2
  * Author:            Andrés Soler from AIA
@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'FIRM_LEGAL_SCHEMA_VERSION', '2.1.0' );
+define( 'FIRM_LEGAL_SCHEMA_VERSION', '2.2.0' );
 define( 'FIRM_LEGAL_SCHEMA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FIRM_LEGAL_SCHEMA_URL', plugin_dir_url( __FILE__ ) );
 
@@ -79,13 +79,27 @@ if ( ! empty( $firm_legal_schema_config['enabled_schemas']['policy_pages'] ) ) {
     require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-policy-page.php';
 }
 
+if ( ! empty( $firm_legal_schema_config['enabled_schemas']['attorney'] ) ) {
+    require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-attorney.php';
+}
+
+if ( ! empty( $firm_legal_schema_config['enabled_schemas']['practice_area'] ) ) {
+    require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-practice-area.php';
+}
+
+if ( ! empty( $firm_legal_schema_config['enabled_schemas']['team_listing'] ) ) {
+    require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-team-listing.php';
+}
+
+if ( ! empty( $firm_legal_schema_config['enabled_schemas']['practice_areas_listing'] ) ) {
+    require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-practice-areas-listing.php';
+}
+
+if ( ! empty( $firm_legal_schema_config['enabled_schemas']['generic_pages'] ) ) {
+    require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-generic-page.php';
+}
+
 // Future handlers — uncomment as they're built:
-// if ( ! empty( $firm_legal_schema_config['enabled_schemas']['attorney'] ) ) {
-//     require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-attorney.php';
-// }
-// if ( ! empty( $firm_legal_schema_config['enabled_schemas']['practice_area'] ) ) {
-//     require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-practice-area.php';
-// }
 // if ( ! empty( $firm_legal_schema_config['enabled_schemas']['faq_page'] ) ) {
 //     require_once FIRM_LEGAL_SCHEMA_PATH . 'includes/handlers/class-faq-page.php';
 // }
