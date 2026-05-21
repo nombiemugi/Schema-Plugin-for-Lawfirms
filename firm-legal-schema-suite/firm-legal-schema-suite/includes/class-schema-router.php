@@ -66,7 +66,7 @@ class Firm_Legal_Schema_Router {
             return new Firm_Legal_Blog_Posting( $this->config );
         }
 
-        // -------- Attorney bio -------- //
+        // -------- Attorney bio (CPT-based site) -------- //
         if ( ! empty( $enabled['attorney'] )
             && class_exists( 'Firm_Legal_Attorney' )
             && ! empty( $this->config['attorney_post_type'] )
@@ -75,13 +75,45 @@ class Firm_Legal_Schema_Router {
             return new Firm_Legal_Attorney( $this->config );
         }
 
-        // -------- Practice area -------- //
+        // -------- Practice area (CPT-based site) -------- //
         if ( ! empty( $enabled['practice_area'] )
             && class_exists( 'Firm_Legal_Practice_Area' )
             && ! empty( $this->config['practice_area_post_type'] )
             && is_singular( $this->config['practice_area_post_type'] )
         ) {
             return new Firm_Legal_Practice_Area( $this->config );
+        }
+
+        // -------- Attorney bio (hierarchical-page site) -------- //
+        if ( ! empty( $enabled['attorney'] )
+            && class_exists( 'Firm_Legal_Attorney' )
+            && $this->attorney_page_matches()
+        ) {
+            return new Firm_Legal_Attorney( $this->config );
+        }
+
+        // -------- Practice area (hierarchical-page site) -------- //
+        if ( ! empty( $enabled['practice_area'] )
+            && class_exists( 'Firm_Legal_Practice_Area' )
+            && $this->practice_area_page_matches()
+        ) {
+            return new Firm_Legal_Practice_Area( $this->config );
+        }
+
+        // -------- Team listing page (e.g., /meet-our-team/) -------- //
+        if ( ! empty( $enabled['team_listing'] )
+            && class_exists( 'Firm_Legal_Team_Listing' )
+            && $this->team_listing_matches()
+        ) {
+            return new Firm_Legal_Team_Listing( $this->config );
+        }
+
+        // -------- Practice areas listing page (e.g., /practice-areas/) -------- //
+        if ( ! empty( $enabled['practice_areas_listing'] )
+            && class_exists( 'Firm_Legal_Practice_Areas_Listing' )
+            && $this->practice_areas_listing_matches()
+        ) {
+            return new Firm_Legal_Practice_Areas_Listing( $this->config );
         }
 
         // -------- About page -------- //
@@ -140,7 +172,165 @@ class Firm_Legal_Schema_Router {
             return new Firm_Legal_Policy_Page( $this->config );
         }
 
+        // -------- Generic pages (in-the-media, jobs, blog index, ...) -------- //
+        if ( ! empty( $enabled['generic_pages'] )
+            && class_exists( 'Firm_Legal_Generic_Page' )
+            && $this->any_generic_page_matches()
+        ) {
+            return new Firm_Legal_Generic_Page( $this->config );
+        }
+
         return null;
+    }
+
+
+    /**
+     * True when the current request is a page whose parent slug matches
+     * one of the configured attorney_parent_pages slugs.
+     *
+     * @return bool
+     */
+    protected function attorney_page_matches() {
+        return $this->is_child_of_configured_parent( 'attorney_parent_pages' );
+    }
+
+
+    /**
+     * True when the current request is a page whose parent slug matches
+     * one of the configured practice_area_parent_pages slugs.
+     *
+     * @return bool
+     */
+    protected function practice_area_page_matches() {
+        return $this->is_child_of_configured_parent( 'practice_area_parent_pages' );
+    }
+
+
+    /**
+     * True when the current page slug matches one of the team listing
+     * slugs (typically the parent of attorney pages, e.g. /meet-our-team/).
+     *
+     * Pulls slugs from pages.meet_our_team first, falling back to
+     * attorney_parent_pages.slugs so a single config block can drive both.
+     *
+     * @return bool
+     */
+    protected function team_listing_matches() {
+        $slugs = $this->page_slugs( 'meet_our_team' );
+        if ( empty( $slugs ) ) {
+            $slugs = $this->parent_slugs( 'attorney_parent_pages' );
+        }
+        if ( empty( $slugs ) ) {
+            return false;
+        }
+        return is_page( $slugs );
+    }
+
+
+    /**
+     * True when the current page slug matches one of the practice areas
+     * listing slugs.
+     *
+     * Pulls slugs from pages.practice_areas_index first, falling back
+     * to practice_area_parent_pages.slugs.
+     *
+     * @return bool
+     */
+    protected function practice_areas_listing_matches() {
+        $slugs = $this->page_slugs( 'practice_areas_index' );
+        if ( empty( $slugs ) ) {
+            $slugs = $this->parent_slugs( 'practice_area_parent_pages' );
+        }
+        if ( empty( $slugs ) ) {
+            return false;
+        }
+        return is_page( $slugs );
+    }
+
+
+    /**
+     * Shared implementation for parent-slug detection.
+     * Looks up the current post's parent page slug and checks it
+     * against the slugs in $config[$config_key]['slugs'].
+     *
+     * @param string $config_key
+     * @return bool
+     */
+    protected function is_child_of_configured_parent( $config_key ) {
+        if ( ! is_page() ) {
+            return false;
+        }
+
+        $parent_slugs = $this->parent_slugs( $config_key );
+        if ( empty( $parent_slugs ) ) {
+            return false;
+        }
+
+        $post_id = get_queried_object_id();
+        if ( ! $post_id ) {
+            return false;
+        }
+
+        $parent_id = wp_get_post_parent_id( $post_id );
+        if ( ! $parent_id ) {
+            return false;
+        }
+
+        $parent = get_post( $parent_id );
+        if ( ! $parent ) {
+            return false;
+        }
+
+        return in_array( $parent->post_name, $parent_slugs, true );
+    }
+
+
+    /**
+     * Extract the slugs array from a top-level parent-pages config block.
+     *
+     * @param string $config_key e.g., 'attorney_parent_pages'
+     * @return array
+     */
+    protected function parent_slugs( $config_key ) {
+        if ( empty( $this->config[ $config_key ]['slugs'] )
+            || ! is_array( $this->config[ $config_key ]['slugs'] )
+        ) {
+            return array();
+        }
+        return array_values( array_filter(
+            $this->config[ $config_key ]['slugs'],
+            function ( $s ) { return ! empty( $s ); }
+        ) );
+    }
+
+
+    /**
+     * Check whether the current page slug matches any slug in any
+     * generic_pages entry.
+     *
+     * @return bool
+     */
+    protected function any_generic_page_matches() {
+        if ( empty( $this->config['generic_pages'] ) || ! is_array( $this->config['generic_pages'] ) ) {
+            return false;
+        }
+
+        $all_slugs = array();
+        foreach ( $this->config['generic_pages'] as $entry ) {
+            if ( ! empty( $entry['slugs'] ) && is_array( $entry['slugs'] ) ) {
+                foreach ( $entry['slugs'] as $slug ) {
+                    if ( ! empty( $slug ) ) {
+                        $all_slugs[] = $slug;
+                    }
+                }
+            }
+        }
+
+        if ( empty( $all_slugs ) ) {
+            return false;
+        }
+
+        return is_page( $all_slugs );
     }
 
 

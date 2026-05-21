@@ -184,6 +184,54 @@ abstract class Firm_Legal_Schema_Base {
 
 
     /**
+     * Return the slug of the parent page of a given post, or '' when
+     * the post has no parent (or the parent isn't reachable).
+     *
+     * Used by hierarchical-page sites (e.g., attorneys as child pages
+     * of /meet-our-team/) to detect what kind of page is being rendered.
+     *
+     * @param int $post_id
+     * @return string
+     */
+    protected function parent_page_slug( $post_id ) {
+        $parent_id = wp_get_post_parent_id( $post_id );
+        if ( ! $parent_id ) {
+            return '';
+        }
+        $parent = get_post( $parent_id );
+        return $parent ? $parent->post_name : '';
+    }
+
+
+    /**
+     * Return published child pages of the page whose slug is $parent_slug,
+     * ordered by menu_order. Returns an empty array when the parent page
+     * doesn't exist.
+     *
+     * Used by listing handlers (Team / Practice Areas) to enumerate
+     * children when building ItemList entries.
+     *
+     * @param string $parent_slug
+     * @return array Array of WP_Post objects
+     */
+    protected function child_pages_of( $parent_slug ) {
+        if ( empty( $parent_slug ) ) {
+            return array();
+        }
+        $parent = get_page_by_path( $parent_slug );
+        if ( ! $parent ) {
+            return array();
+        }
+        $children = get_pages( array(
+            'parent'      => $parent->ID,
+            'sort_column' => 'menu_order',
+            'post_status' => 'publish',
+        ) );
+        return is_array( $children ) ? $children : array();
+    }
+
+
+    /**
      * Strip null and empty-string values from an entity array.
      * Used to remove optional fields that aren't populated.
      *
