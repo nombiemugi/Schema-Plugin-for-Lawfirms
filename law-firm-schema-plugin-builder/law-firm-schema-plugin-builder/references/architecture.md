@@ -111,13 +111,28 @@ abstract class Firm_Legal_Schema_Base {
     }
     
     /**
-     * Author resolution: ACF custom fields first, then native WP author.
-     * Returns array with name, url, and @id anchor.
+     * Author resolution: managing-attorney override first, then ACF
+     * custom fields, then native WP author. Returns array with name,
+     * url, and @id anchor.
      */
     protected function resolve_author() {
         global $post;
         $author_name = null;
         $author_url  = null;
+        
+        // Managing-attorney override — when configured, every blog post is
+        // attributed to this person (name, url, and @id all aligned).
+        if ( ! empty( $this->config['managing_attorney']['name'] ) ) {
+            $name = $this->config['managing_attorney']['name'];
+            $url  = $this->config['managing_attorney']['url'];
+            $slug = sanitize_title( remove_accents( $name ) );
+        
+            return array(
+                'name'   => $name,
+                'url'    => $url,
+                'anchor' => $this->home_url . '#attorney-' . $slug,
+            );
+        }
         
         if ( function_exists( 'get_field' ) ) {
             $author_name = get_field( $this->config['acf_author_name_field'], $this->post_id );

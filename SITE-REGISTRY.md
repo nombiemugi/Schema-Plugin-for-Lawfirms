@@ -26,6 +26,10 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre', // verified
 'acf_author_url_field'  => 'autor_url',    // verified
+'managing_attorney'     => array(
+    'name' => '',  // TBD — set to attribute all blog posts to one attorney's profile page
+    'url'  => '',  // their dedicated profile page URL
+),
 ```
 
 **Installation Method:** Currently in `Avada-Child-Theme/functions.php` (v1.x format).
@@ -86,6 +90,10 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre', // TBD — only relevant if WP posts use ACF for author
 'acf_author_url_field'  => 'autor_url',    // TBD
+'managing_attorney'     => array(
+    'name' => '',  // TBD — e.g. 'Kate Lincoln-Goldfinch' to pin all blog posts to her profile
+    'url'  => '',  // e.g. 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/'
+),
 ```
 
 **Installation Method:** Plugin (firm-legal-schema-suite v2.2.0+).
@@ -164,6 +172,10 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre',
 'acf_author_url_field'  => 'autor_url',
+'managing_attorney'     => array(
+    'name' => '',  // set to attribute every blog post to one attorney
+    'url'  => '',  // their dedicated profile page URL
+),
 ```
 
 **Installation Method:**
@@ -189,5 +201,6 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 **Test URLs:**
 
 **Notes:**
+- Managing-attorney attribution: to credit every blog post to one attorney, set `managing_attorney` `name` + `url` (their dedicated profile page) in `site-config.php`; leave `name` empty to use the per-post WP/ACF author. The `@id` is derived from the name (`#attorney-{slug}`) and must match the attorney profile page.
 
 ---
