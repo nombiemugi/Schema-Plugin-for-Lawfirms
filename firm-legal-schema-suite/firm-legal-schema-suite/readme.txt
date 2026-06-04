@@ -3,7 +3,7 @@ Contributors: Andres from Almost Illegal Ads
 Tags: schema, json-ld, structured-data, seo, legal, law-firm
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 Requires PHP: 7.2
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,6 +69,11 @@ All site-specific settings live in `config/site-config.php`. See the inline comm
 
 == Changelog ==
 
+= 2.2.1 =
+* Setup + docs: added a step-by-step for managing-attorney attribution — set `managing_attorney` `name` + the attorney's EXACT dedicated profile-page `url` in `config/site-config.php`. The author `@id` is derived from the name (`#attorney-{slug}`) and must match the attorney's profile page for graph continuity
+* Reference deployment (Lincoln Goldfinch) `managing_attorney` config pinned to Kate Lincoln-Goldfinch's exact profile URL
+* No handler code changes — behavior is identical to 2.2.0; the BlogPosting handler stays fully config-driven and reusable across sites (edit only `config/site-config.php` per site)
+
 = 2.2.0 =
 * Added handlers for Attorney (Person), Practice Area (LegalService + OfferCatalog), Team listing (CollectionPage + ItemList), Practice Areas listing, and Generic pages (plain WebPage for media/jobs/blog-index pages that don't warrant a richer schema type)
 * Added hierarchical-page detection — attorneys and practice areas can be child WP pages under configured parent slugs, not only custom post types (supports the Lincoln Goldfinch site structure)
@@ -91,6 +96,9 @@ All site-specific settings live in `config/site-config.php`. See the inline comm
 * Per-site configuration file pattern
 
 == Upgrade Notice ==
+
+= 2.2.1 =
+Documentation/config release clarifying how to set the managing-attorney's exact profile URL and the matching `#attorney-{slug}` `@id`. No code changes — a safe drop-in over 2.2.0.
 
 = 2.2.0 =
 Adds Attorney, Practice Area, Team listing, Practice Areas listing, and Generic page handlers, hierarchical-page detection, and optional managing-attorney attribution for blog posts. Backward compatible — leave the new `managing_attorney` config block empty to keep the existing per-post author behavior.

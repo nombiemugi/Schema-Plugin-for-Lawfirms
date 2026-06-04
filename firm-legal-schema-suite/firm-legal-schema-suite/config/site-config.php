@@ -77,8 +77,8 @@ return array(
      * PLACEHOLDERS below — replace per site.
      */
     'managing_attorney' => array(
-        'name' => '',  // e.g. 'Jane Doe'  (required to enable the override)
-        'url'  => '',  // e.g. 'https://example.com/attorneys/jane-doe/'
+        'name' => 'Kate Lincoln-Goldfinch',  // required to enable the override; also builds the #attorney-{slug} @id
+        'url'  => 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/',  // exact profile page URL
     ),
 
 

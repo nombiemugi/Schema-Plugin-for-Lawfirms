@@ -91,8 +91,8 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'acf_author_name_field' => 'autor_nombre', // TBD — only relevant if WP posts use ACF for author
 'acf_author_url_field'  => 'autor_url',    // TBD
 'managing_attorney'     => array(
-    'name' => '',  // TBD — e.g. 'Kate Lincoln-Goldfinch' to pin all blog posts to her profile
-    'url'  => '',  // e.g. 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/'
+    'name' => 'Kate Lincoln-Goldfinch',  // pins every blog post to her profile; builds @id #attorney-kate-lincoln-goldfinch
+    'url'  => 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/',  // exact profile page URL
 ),
 ```
 

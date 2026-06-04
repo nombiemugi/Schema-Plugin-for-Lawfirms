@@ -3,7 +3,7 @@
  * Plugin Name:       Law Firm Legal Schema Suite
  * Plugin URI:        https://www.almostillegalads.com
  * Description:       Outputs Schema.org structured data (JSON-LD) for law firm WordPress sites. Modular architecture supports BlogPosting, AboutPage, ContactPage, Attorney (Person), Practice Area (LegalService + OfferCatalog), Team listing, Practice Areas listing, Testimonials, Video Library, Blog index, policy pages (Privacy/Terms/Disclaimers), and generic listing pages. Supports both Custom Post Type and hierarchical-page site structures. References sitewide #organization, #website, and #logo by @id — never redefines them. Bilingual slug detection (English + Spanish) with auto language resolution via Polylang, WPML, or URL pattern.
- * Version:           2.2.0
+ * Version:           2.2.1
  * Requires at least: 5.0
  * Requires PHP:      7.2
  * Author:            Andrés Soler from AIA
@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'FIRM_LEGAL_SCHEMA_VERSION', '2.2.0' );
+define( 'FIRM_LEGAL_SCHEMA_VERSION', '2.2.1' );
 define( 'FIRM_LEGAL_SCHEMA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FIRM_LEGAL_SCHEMA_URL', plugin_dir_url( __FILE__ ) );
 
