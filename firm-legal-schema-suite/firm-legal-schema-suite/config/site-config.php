@@ -71,6 +71,35 @@ return array(
 
 
     // -----------------------------------------------------------------
+    // MANAGING ATTORNEY (blog post author attribution)
+    // -----------------------------------------------------------------
+
+    /**
+     * When 'name' is set, EVERY blog post is attributed to this managing
+     * attorney — the author Person's name, url, and @id all reflect this
+     * person, regardless of the WordPress post author. This overrides the
+     * ACF / native WP author resolution above.
+     *
+     * The @id is built as:
+     *   home_url + '#attorney-' + sanitize_title( remove_accents( name ) )
+     * and MUST match the @id declared on the attorney's dedicated profile
+     * page for entity continuity.
+     *
+     * 'url' is the FULL URL of that dedicated profile page (not the WP
+     * author archive).
+     *
+     * Leave 'name' empty to disable the override — the plugin then falls
+     * back to the per-post ACF author / native WP author.
+     *
+     * PLACEHOLDERS below — replace per site.
+     */
+    'managing_attorney' => array(
+        'name' => 'Kate Lincoln-Goldfinch',  // required to enable the override; also builds the #attorney-{slug} @id
+        'url'  => 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/',  // exact profile page URL
+    ),
+
+
+    // -----------------------------------------------------------------
     // CUSTOM POST TYPES
     // -----------------------------------------------------------------
 

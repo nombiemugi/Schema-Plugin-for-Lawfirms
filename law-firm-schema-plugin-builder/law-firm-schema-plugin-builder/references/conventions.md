@@ -20,6 +20,8 @@ Full attorney details (bio, credentials, awards, `sameAs`) live ONLY on the atto
 - Inconsistency when attorney details change (update one place, not 500 blog posts)
 - Duplicate content signals
 
+**Managing-attorney attribution (optional):** When `managing_attorney` (with a non-empty `name`) is set in `site-config.php`, every blog post is attributed to that one person — `name`, `url`, and `@id` all reflect the managing attorney, overriding the per-post ACF / WP author. `url` points to their dedicated profile page (not the WP author archive). Leave `name` empty to keep per-post author resolution. The lightweight-Person rule above is unchanged.
+
 ### Attorney Profile: Person with Legal Properties
 
 Attorney profile pages use `Person` (not the deprecated `Attorney` type) with rich legal-specific properties: `knowsAbout`, `memberOf`, `alumniOf`, `hasCredential`, `sameAs`.
