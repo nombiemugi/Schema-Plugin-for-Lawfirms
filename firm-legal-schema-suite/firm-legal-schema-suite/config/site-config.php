@@ -41,13 +41,30 @@ return array(
 
 
     // -----------------------------------------------------------------
-    // AUTHOR HANDLING (ACF)
+    // AUTHOR HANDLING
     // -----------------------------------------------------------------
 
     /**
+     * Fixed author attributed to blog content (BlogPosting + blog index),
+     * pointing at the author's personal profile page rather than a generic
+     * WP author archive. In most cases this is the firm's primary member.
+     *
+     * When 'name' is set, this takes priority over the ACF/native WP
+     * author lookup below for every post — per-post byline overrides are
+     * not used on this site.
+     *
+     * Leave 'name' empty to fall back to ACF fields, then native WP author.
+     */
+    'blog_author' => array(
+        'name' => '',
+        'url'  => '',
+    ),
+
+    /**
      * Advanced Custom Fields field names for custom author overrides.
-     * If ACF is not installed or these fields are empty, the plugin falls
-     * back to the native WordPress post author.
+     * Only consulted when 'blog_author' above is left empty. If ACF is
+     * not installed or these fields are empty, the plugin falls back to
+     * the native WordPress post author.
      */
     'acf_author_name_field' => 'autor_nombre',
     'acf_author_url_field'  => 'autor_url',

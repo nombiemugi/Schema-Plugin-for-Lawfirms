@@ -116,7 +116,7 @@ abstract class Firm_Legal_Schema_Base {
 
 
     /**
-     * Resolve the post's author with ACF override → WP fallback.
+     * Resolve the post's author with fixed config → ACF override → WP fallback.
      *
      * @return array {
      *     @type string $name   Author display name
@@ -126,25 +126,18 @@ abstract class Firm_Legal_Schema_Base {
      */
     protected function resolve_author() {
         global $post;
-        $author_name = null;
-        $author_url  = null;
 
-        // Managing-attorney override — when configured, every blog post is
-        // attributed to this person (name, url, and @id all aligned).
-        if ( ! empty( $this->config['managing_attorney']['name'] ) ) {
-            $name = $this->config['managing_attorney']['name'];
-            $url  = $this->config['managing_attorney']['url'];
-            $slug = sanitize_title( remove_accents( $name ) );
+        // Fixed author (personal/attorney page) takes priority — no
+        // per-post byline override on this site.
+        $author_name = ! empty( $this->config['blog_author']['name'] )
+            ? $this->config['blog_author']['name']
+            : null;
+        $author_url = ! empty( $this->config['blog_author']['url'] )
+            ? $this->config['blog_author']['url']
+            : null;
 
-            return array(
-                'name'   => $name,
-                'url'    => $url,
-                'anchor' => $this->home_url . '#attorney-' . $slug,
-            );
-        }
-
-        // ACF custom fields first
-        if ( function_exists( 'get_field' ) ) {
+        // ACF custom fields next
+        if ( empty( $author_name ) && function_exists( 'get_field' ) ) {
             $author_name = get_field( $this->config['acf_author_name_field'], $this->post_id );
             $author_url  = get_field( $this->config['acf_author_url_field'], $this->post_id );
         }

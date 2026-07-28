@@ -7,7 +7,8 @@
  *
  * Graph includes:
  *  - BreadcrumbList
- *  - WebPage    — mainEntity → #organization, breadcrumb → ref
+ *  - WebPage    — about → #organization, author → attorney anchor,
+ *                 breadcrumb → ref
  *
  * Intentionally does NOT emit a Blog entity or enumerate recent posts.
  * Crawlers already follow links from the page; the schema's job here is
@@ -51,6 +52,8 @@ class Firm_Legal_Blog_Index extends Firm_Legal_Schema_Base {
      * @return array
      */
     protected function build_webpage() {
+        $author = $this->resolve_author();
+
         $entity = array(
             '@type'      => 'WebPage',
             '@id'        => $this->permalink . '#webpage',
@@ -58,6 +61,7 @@ class Firm_Legal_Blog_Index extends Firm_Legal_Schema_Base {
             'name'       => get_the_title( $this->post_id ),
             'isPartOf'   => $this->website_ref(),
             'about'      => $this->org_ref(),
+            'author'     => array( '@id' => $author['anchor'] ),
             'breadcrumb' => array( '@id' => $this->permalink . '#breadcrumb' ),
             'inLanguage' => $this->lang_code,
         );
