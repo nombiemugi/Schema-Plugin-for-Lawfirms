@@ -4,6 +4,10 @@ Track per-site configurations, deployment status, and validation results for all
 
 When deploying to a new site, add it here with all relevant details. Reference this file when working on a specific site to avoid re-asking the user for the same info.
 
+> **⚠️ As of v2.3.0 — `managing_attorney` is INERT.** `Firm_Legal_Schema_Base::resolve_author()` has always read `blog_author`, never `managing_attorney`. Any site below whose entry showed a populated `managing_attorney` block was **not** actually pinning its blog author — the plugin fell through to the ACF / native WP author instead. Entries have been corrected to `blog_author`, but the live sites need re-verification. See the per-site notes.
+>
+> v2.3.0 also makes the Person `@id` configurable via `person_id` (`base` / `fragment` / `append_slug`). Record the preset each site uses, because it **must** match the `@id` its profile pages already declare.
+
 ---
 
 ## Irving Law Firm
@@ -26,9 +30,14 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre', // verified
 'acf_author_url_field'  => 'autor_url',    // verified
-'managing_attorney'     => array(
-    'name' => '',  // TBD — set to attribute all blog posts to one attorney's profile page
-    'url'  => '',  // their dedicated profile page URL
+'person_id'             => array(          // TBD — verify against the profile page @id
+    'base'        => 'home',
+    'fragment'    => 'attorney',
+    'append_slug' => true,
+),
+'blog_author'           => array(
+    'name' => '',  // empty = per-post ACF/WP author (current behavior)
+    'url'  => '',
 ),
 ```
 
@@ -72,6 +81,75 @@ When deploying to a new site, add it here with all relevant details. Reference t
 
 ---
 
+## Fairfax Divorce Lawyers
+
+**Site URL:** https://www.fairfaxdivorcelawyers.com
+
+**Status:** 🟡 In Progress (v2.3.0 config prepared — pending deploy + validation)
+
+**Active Theme:** TBD
+
+**Caching:** TBD (confirm WP Rocket / CDN before first deploy — purge after every release)
+
+**Multilingual Setup:** TBD — no Spanish pages confirmed. If English-only, pin `force_language` to `'en-US'` rather than leaving auto-detection to fall through by accident.
+
+**Configuration values:**
+```php
+'force_language' => null,          // TBD — set 'en-US' if English-only
+'person_id'      => array(         // PRESET B — verified against the live profile page
+    'base'        => 'author_url',
+    'fragment'    => 'person',
+    'append_slug' => false,
+),
+'blog_author'    => array(
+    'name' => 'John Irving',       // TBD — confirm this is the intended blog author
+    'url'  => 'https://www.fairfaxdivorcelawyers.com/meet-the-team/john-irving/',
+),
+```
+
+**Person @id (VERIFIED against live page source):**
+
+```
+https://www.fairfaxdivorcelawyers.com/meet-the-team/john-irving/#person
+```
+
+This is the `@id` the profile page's own `Person` already declares — the reason this site uses **preset B** (`base: 'author_url'`, bare `#person` fragment) instead of the law-firm default `{home}/#attorney-{slug}`. Preset B reproduces it character for character. Do not change `person_id` on this site without re-checking that page's source.
+
+**Installation Method:** Plugin (firm-legal-schema-suite v2.3.0+).
+
+**Site Structure:** Attorney/team bios live at `/meet-the-team/{firstname-lastname}/`, so `attorney_parent_pages` `en` slug is `meet-the-team` — **not** the `meet-our-team` placeholder shipped in the template config. Only matters once the `attorney` handler is enabled.
+
+**Page Slugs:**
+- Meet The Team (listing): `meet-the-team`
+- All others: TBD — confirm against the live site before enabling any handler
+
+**Sitewide Schema Source:** TBD — verify `#organization`, `#website`, `#logo` are emitted on every page before enabling handlers. The profile page emits a full `Person`, so something is already producing sitewide schema; identify it.
+
+**Enabled Schemas:**
+- ✅ BlogPosting
+- ⬜ Attorney
+- ⬜ Practice Area
+- ⬜ Contact Page
+- ⬜ About Page
+- ⬜ FAQ Page
+
+**Last Validated:** N/A (pending first deploy)
+
+**Validation Results:** N/A (pending first deploy)
+
+**Test URLs (pending):**
+- Attorney profile (source of the verified `@id`): https://www.fairfaxdivorcelawyers.com/meet-the-team/john-irving/
+- English single post: TBD
+- Spanish: TBD (confirm whether Spanish content exists at all)
+
+**Notes:**
+- **OPEN QUESTION — who is the blog author?** The request that drove this config described "the business owner" as a woman, but the only profile `@id` supplied was John Irving's. If posts should be attributed to someone else, change `blog_author` `name` + `url` to **her** profile page and re-verify that page's `@id`. Under preset B the `name` does not affect the `@id` (only `url` does), so a wrong `name` yields a correct-looking `@id` attached to the wrong person's name — silent and easy to miss.
+- **OPEN QUESTION — is this the right site?** The same request stated the target site "is not a legal services site," which this domain plainly is. Possible that this `@id` was supplied as a pattern example for a different site. Confirm before deploying.
+- Possibly related to the **Irving Law Firm** entry above (theirvinglawfirm.com) — same surname, likely the same client with two properties. Confirm whether they share a config or need separate ones.
+- Preset B means a typo in `blog_author` `url` silently splits the author into a second entity. The `url` is the `@id` base here.
+
+---
+
 ## Lincoln Goldfinch Law
 
 **Site URL:** https://www.lincolngoldfinch.com
@@ -90,7 +168,12 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre', // TBD — only relevant if WP posts use ACF for author
 'acf_author_url_field'  => 'autor_url',    // TBD
-'managing_attorney'     => array(
+'person_id'             => array(          // preset A — matches the #attorney-{slug} convention
+    'base'        => 'home',
+    'fragment'    => 'attorney',
+    'append_slug' => true,
+),
+'blog_author'           => array(          // WAS 'managing_attorney' — that key is inert, see note below
     'name' => 'Kate Lincoln-Goldfinch',  // pins every blog post to her profile; builds @id #attorney-kate-lincoln-goldfinch
     'url'  => 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/',  // exact profile page URL
 ),
@@ -146,6 +229,7 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 - Spanish equivalents: TBD (confirm slugs on deploy)
 
 **Notes:**
+- **The Kate attribution never worked.** This entry previously recorded it under `managing_attorney`, a key `resolve_author()` never reads. Posts fell through to the ACF / native WP author instead. The key has been corrected to `blog_author` above — apply it in the deployed config and confirm the emitted author on a live post before considering this done.
 - Confirm all Spanish slugs against the live site on first deploy — placeholders in `site-config.php` are educated guesses
 - Populate `practice_areas` config with subtopic lists per practice area before flipping the toggle
 - Per `CLAUDE.md`: purge WP Rocket + Cloudflare + browser cache after every plugin update or config change
@@ -172,11 +256,24 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre',
 'acf_author_url_field'  => 'autor_url',
-'managing_attorney'     => array(
-    'name' => '',  // set to attribute every blog post to one attorney
+'person_id'             => array(  // pick the preset that matches the profile page's @id
+    'base'        => 'home',
+    'fragment'    => 'attorney',
+    'append_slug' => true,
+),
+'blog_author'           => array(
+    'name' => '',  // set to attribute every blog post to one person; empty = per-post author
     'url'  => '',  // their dedicated profile page URL
 ),
 ```
+
+**Person @id (verify against live page source before deploying):**
+
+```
+paste the @id the profile page's own Person declares
+```
+
+Preset used: A / B / C — see `readme.txt` → Person @id presets.
 
 **Installation Method:**
 
@@ -201,6 +298,7 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 **Test URLs:**
 
 **Notes:**
-- Managing-attorney attribution: to credit every blog post to one attorney, set `managing_attorney` `name` + `url` (their dedicated profile page) in `site-config.php`; leave `name` empty to use the per-post WP/ACF author. The `@id` is derived from the name (`#attorney-{slug}`) and must match the attorney profile page.
+- Fixed-author attribution: to credit every blog post to one person, set `blog_author` `name` + `url` (their dedicated profile page) in `site-config.php`; leave `name` empty to use the per-post WP/ACF author. **Do not use `managing_attorney` — it is inert and has no effect on output.**
+- Before deploying, open the person's profile page, view source, find the `Person` in its JSON-LD, and copy its `@id`. Choose the `person_id` preset that reproduces that string exactly. A mismatch passes both validators cleanly while Google reads two unrelated people.
 
 ---
