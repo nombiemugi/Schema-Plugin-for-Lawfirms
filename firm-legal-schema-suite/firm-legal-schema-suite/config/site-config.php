@@ -120,7 +120,6 @@ return array(
      * PRESETS — copy the one that reproduces the site's existing @id.
      *
      *   A. Law-firm convention, one anchor per attorney on the home URL.
-     *      This is the shipped default.
      *          'base' => 'home', 'fragment' => 'attorney', 'append_slug' => true
      *      [EXAMPLE] https://example.com/#attorney-jane-doe
      *
@@ -133,11 +132,23 @@ return array(
      *   C. Profile hosted at a fixed URL that the plugin can't derive.
      *          'base' => 'https://example.com/team/jane/', 'fragment' => 'person', 'append_slug' => false
      *      [EXAMPLE] https://example.com/team/jane/#person
+     *
+     *   D. ONE sitewide person anchored to the home URL. This is the
+     *      shipped default.
+     *          'base' => 'home', 'fragment' => 'person', 'append_slug' => false
+     *      [EXAMPLE] https://example.com/#person
+     *
+     *      ⚠ With no slug appended, this @id does NOT vary by author —
+     *      every post on the site resolves to the same Person entity.
+     *      Correct on a single-author / single-owner site; WRONG on a
+     *      multi-author site, where it silently merges distinct people
+     *      into one. On multi-author sites use preset A (slug per person)
+     *      or B (anchored to each person's own URL).
      */
     'person_id' => array(
         'base'        => 'home',
-        'fragment'    => 'attorney',
-        'append_slug' => true,
+        'fragment'    => 'person',
+        'append_slug' => false,
     ),
 
     /**

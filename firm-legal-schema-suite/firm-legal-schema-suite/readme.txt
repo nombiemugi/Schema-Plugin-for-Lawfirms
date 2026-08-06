@@ -3,7 +3,7 @@ Contributors: Andres from Almost Illegal Ads
 Tags: schema, json-ld, structured-data, seo, legal, law-firm
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.3.0
+Stable tag: 2.4.0
 Requires PHP: 7.2
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -79,9 +79,12 @@ The file header lists a five-step minimum checklist for a new site.
 
 `person_id` decides the shape of the `@id` for every `Person` the plugin emits. It MUST reproduce, character for character, the `@id` that the person's own profile page already declares — otherwise Google reads two unrelated people and nothing in the validators looks wrong. Open that page, view source, find the `Person` in its JSON-LD, and copy its `@id` before choosing a preset.
 
-* **A — law-firm convention** (shipped default): `base` `'home'`, `fragment` `'attorney'`, `append_slug` `true` → `https://example.com/#attorney-jane-doe`
+* **A — law-firm convention**: `base` `'home'`, `fragment` `'attorney'`, `append_slug` `true` → `https://example.com/#attorney-jane-doe`
 * **B — anchored to the person's own bio page**, correct for most non-law-firm sites: `base` `'author_url'`, `fragment` `'person'`, `append_slug` `false` → `https://example.com/meet-the-team/jane-doe/#person`
 * **C — profile at a fixed URL** the plugin can't derive: `base` `'https://example.com/team/jane/'`, `fragment` `'person'`, `append_slug` `false` → `https://example.com/team/jane/#person`
+* **D — one sitewide person** (shipped default): `base` `'home'`, `fragment` `'person'`, `append_slug` `false` → `https://example.com/#person`
+
+**Preset D does not vary by author.** With no slug appended, every post on the site resolves to the same `Person` entity. That is correct on a single-author or single-owner site and wrong on a multi-author one, where it silently merges distinct people into one. Multi-author sites want preset A or B.
 
 = Silent failure modes =
 
@@ -94,6 +97,11 @@ These produce no error, just missing or wrong output — check them first when s
 * Caches not cleared after deploying — the most common cause of all
 
 == Changelog ==
+
+= 2.4.0 =
+* Changed the shipped `person_id` default from preset A (`{home}/#attorney-{slug}`) to preset D (`{home}/#person`) — `base` `'home'`, `fragment` `'person'`, `append_slug` `false`. Single-owner sites now work out of the box; law-firm deployments must set preset A explicitly
+* **Not a drop-in for existing law-firm sites.** Unlike 2.3.0, this release does NOT preserve 2.2.1 output on default settings. Any site relying on the default `#attorney-{slug}` anchor must pin preset A in `config/site-config.php` before updating, or its blog authors will stop matching the `@id` on their attorney profile pages
+* Documented preset D and its one sharp edge: with no slug appended the `@id` does not vary by author, so a multi-author site silently merges every author into a single `Person` entity. Correct for one-owner sites, wrong for multi-author ones
 
 = 2.3.0 =
 * The Person `@id` is now configurable via a new `person_id` block in `config/site-config.php` (`base`, `fragment`, `append_slug`) instead of being hardcoded to `{home}/#attorney-{slug}`. `base` accepts `'home'`, `'author_url'` (the person's own profile URL), or any literal URL — so non-law-firm sites can emit `{profile-url}/#person`, and profiles hosted on another URL are supported
