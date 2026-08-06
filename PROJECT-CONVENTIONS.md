@@ -20,7 +20,11 @@ Full attorney details (bio, credentials, awards, `sameAs`) live ONLY on the atto
 - Inconsistency when attorney details change (update one place, not 500 blog posts)
 - Duplicate content signals
 
-**Managing-attorney attribution (optional):** When `managing_attorney` (with a non-empty `name`) is set in `site-config.php`, every blog post is attributed to that one person — `name`, `url`, and `@id` all reflect the managing attorney, overriding the per-post ACF / WP author. `url` points to their dedicated profile page (not the WP author archive). Leave `name` empty to keep per-post author resolution. The lightweight-Person rule above is unchanged.
+**Fixed-author attribution (optional):** When `blog_author` (with a non-empty `name`) is set in `site-config.php`, every blog post is attributed to that one person — `name`, `url`, and `@id` all reflect them, overriding the per-post ACF / WP author. `url` points to their dedicated profile page (not the WP author archive). Leave `name` empty to keep per-post author resolution. The lightweight-Person rule above is unchanged.
+
+> A `managing_attorney` block also exists in `site-config.php` and earlier revisions of this document specified it as the attribution key. It is **INERT** — `resolve_author()` reads `blog_author` and nothing reads `managing_attorney`. Resolved in favor of the code: use `blog_author`.
+
+**Person `@id` shape:** Never hardcode the `@id` pattern in a handler. Every `Person` the plugin emits — blog author, attorney profile, About page mention — must route through `Firm_Legal_Schema_Base::build_person_id()`, which is driven by the `person_id` config block (`base` / `fragment` / `append_slug`). `base` accepts `'home'` (→ `{home}/#attorney-{slug}`, the law-firm convention), `'author_url'` (→ `{profile-url}/#person`, correct for non-law-firm and single-owner sites), or a literal URL. The resulting `@id` MUST reproduce, character for character, the `@id` the person's own profile page already declares — a mismatch passes both validators cleanly while Google reads two unrelated people.
 
 ### Attorney Profile: Person with Legal Properties
 
@@ -45,11 +49,14 @@ All `@id` values follow these patterns:
 | Organization | `{home}/#organization` | `https://example.com/#organization` |
 | Website | `{home}/#website` | `https://example.com/#website` |
 | Logo | `{home}/#logo` | `https://example.com/#logo` |
-| Attorney | `{home}/#attorney-firstname-lastname` | `https://example.com/#attorney-jane-doe` |
+| Person (default) | `{home}/#attorney-firstname-lastname` | `https://example.com/#attorney-jane-doe` |
+| Person (bio-page anchored) | `{profile-url}/#person` | `https://example.com/meet-the-team/jane-doe/#person` |
 | Page-level entities | `{permalink}#{type}` | `https://example.com/blog/post/#blogposting` |
 | Breadcrumb | `{permalink}#breadcrumb` | `https://example.com/blog/post/#breadcrumb` |
 
-**Critical:** The attorney `@id` derived from a blog post's author MUST match the `@id` on the attorney's profile page. This is entity continuity. If author "Jane Doe" appears on the blog as `#attorney-jane-doe`, her profile page must declare the `Person` entity with the same `@id`.
+The two Person rows are the same mechanism under different `person_id` settings — see the Person `@id` shape rule above. Pick per site; never hardcode either one in a handler.
+
+**Critical:** The Person `@id` derived from a blog post's author MUST match the `@id` on that person's profile page. This is entity continuity. If author "Jane Doe" appears on the blog as `#attorney-jane-doe`, her profile page must declare the `Person` entity with the same `@id`. Verify by reading the profile page's source, not by assuming the pattern — a mismatch passes both validators cleanly.
 
 Author slug generation:
 ```php

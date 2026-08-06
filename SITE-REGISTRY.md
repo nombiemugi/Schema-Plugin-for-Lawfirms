@@ -4,6 +4,10 @@ Track per-site configurations, deployment status, and validation results for all
 
 When deploying to a new site, add it here with all relevant details. Reference this file when working on a specific site to avoid re-asking the user for the same info.
 
+> **⚠️ As of v2.3.0 — `managing_attorney` is INERT.** `Firm_Legal_Schema_Base::resolve_author()` has always read `blog_author`, never `managing_attorney`. Any site below whose entry showed a populated `managing_attorney` block was **not** actually pinning its blog author — the plugin fell through to the ACF / native WP author instead. Entries have been corrected to `blog_author`, but the live sites need re-verification. See the per-site notes.
+>
+> v2.3.0 also makes the Person `@id` configurable via `person_id` (`base` / `fragment` / `append_slug`). Record the preset each site uses, because it **must** match the `@id` its profile pages already declare.
+
 ---
 
 ## Irving Law Firm
@@ -26,9 +30,14 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre', // verified
 'acf_author_url_field'  => 'autor_url',    // verified
-'managing_attorney'     => array(
-    'name' => '',  // TBD — set to attribute all blog posts to one attorney's profile page
-    'url'  => '',  // their dedicated profile page URL
+'person_id'             => array(          // TBD — verify against the profile page @id
+    'base'        => 'home',
+    'fragment'    => 'attorney',
+    'append_slug' => true,
+),
+'blog_author'           => array(
+    'name' => '',  // empty = per-post ACF/WP author (current behavior)
+    'url'  => '',
 ),
 ```
 
@@ -90,7 +99,12 @@ When deploying to a new site, add it here with all relevant details. Reference t
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre', // TBD — only relevant if WP posts use ACF for author
 'acf_author_url_field'  => 'autor_url',    // TBD
-'managing_attorney'     => array(
+'person_id'             => array(          // preset A — matches the #attorney-{slug} convention
+    'base'        => 'home',
+    'fragment'    => 'attorney',
+    'append_slug' => true,
+),
+'blog_author'           => array(          // WAS 'managing_attorney' — that key is inert, see note below
     'name' => 'Kate Lincoln-Goldfinch',  // pins every blog post to her profile; builds @id #attorney-kate-lincoln-goldfinch
     'url'  => 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/',  // exact profile page URL
 ),
@@ -146,6 +160,7 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 - Spanish equivalents: TBD (confirm slugs on deploy)
 
 **Notes:**
+- **The Kate attribution never worked.** This entry previously recorded it under `managing_attorney`, a key `resolve_author()` never reads. Posts fell through to the ACF / native WP author instead. The key has been corrected to `blog_author` above — apply it in the deployed config and confirm the emitted author on a live post before considering this done.
 - Confirm all Spanish slugs against the live site on first deploy — placeholders in `site-config.php` are educated guesses
 - Populate `practice_areas` config with subtopic lists per practice area before flipping the toggle
 - Per `CLAUDE.md`: purge WP Rocket + Cloudflare + browser cache after every plugin update or config change
@@ -172,11 +187,24 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 'spanish_url_marker'    => '/es/',
 'acf_author_name_field' => 'autor_nombre',
 'acf_author_url_field'  => 'autor_url',
-'managing_attorney'     => array(
-    'name' => '',  // set to attribute every blog post to one attorney
+'person_id'             => array(  // pick the preset that matches the profile page's @id
+    'base'        => 'home',
+    'fragment'    => 'attorney',
+    'append_slug' => true,
+),
+'blog_author'           => array(
+    'name' => '',  // set to attribute every blog post to one person; empty = per-post author
     'url'  => '',  // their dedicated profile page URL
 ),
 ```
+
+**Person @id (verify against live page source before deploying):**
+
+```
+paste the @id the profile page's own Person declares
+```
+
+Preset used: A / B / C — see `readme.txt` → Person @id presets.
 
 **Installation Method:**
 
@@ -201,6 +229,7 @@ This means `attorney_post_type` / `practice_area_post_type` are **not** used her
 **Test URLs:**
 
 **Notes:**
-- Managing-attorney attribution: to credit every blog post to one attorney, set `managing_attorney` `name` + `url` (their dedicated profile page) in `site-config.php`; leave `name` empty to use the per-post WP/ACF author. The `@id` is derived from the name (`#attorney-{slug}`) and must match the attorney profile page.
+- Fixed-author attribution: to credit every blog post to one person, set `blog_author` `name` + `url` (their dedicated profile page) in `site-config.php`; leave `name` empty to use the per-post WP/ACF author. **Do not use `managing_attorney` — it is inert and has no effect on output.**
+- Before deploying, open the person's profile page, view source, find the `Person` in its JSON-LD, and copy its `@id`. Choose the `person_id` preset that reproduces that string exactly. A mismatch passes both validators cleanly while Google reads two unrelated people.
 
 ---

@@ -59,14 +59,13 @@ class Firm_Legal_Attorney extends Firm_Legal_Schema_Base {
     protected function build_person() {
 
         $name        = get_the_title( $this->post_id );
-        $slug        = sanitize_title( remove_accents( $name ) );
         $description = $this->resolve_description();
         $image       = get_the_post_thumbnail_url( $this->post_id, 'full' );
         $job_title   = $this->resolve_job_title( $this->post_name() );
 
         $entity = array(
             '@type'       => 'Person',
-            '@id'         => $this->home_url . '#attorney-' . $slug,
+            '@id'         => $this->build_person_id( $name, $this->permalink ),
             'name'        => $name,
             'url'         => $this->permalink,
             'image'       => $image ?: null,
@@ -89,7 +88,7 @@ class Firm_Legal_Attorney extends Firm_Legal_Schema_Base {
      *
      * Config shape:
      *   'attorneys' => array(
-     *       'kate-lincoln-goldfinch' => array(
+     *       'jane-doe' => array(
      *           'job_title' => 'Founding Partner',
      *       ),
      *   ),

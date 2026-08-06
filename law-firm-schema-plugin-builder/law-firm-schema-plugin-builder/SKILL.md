@@ -39,7 +39,7 @@ These conventions are mandatory across all schemas generated for law firm sites.
    - Organization: `https://www.example.com/#organization`
    - Website: `https://www.example.com/#website`
    - Logo: `https://www.example.com/#logo`
-   - Attorney: `https://www.example.com/#attorney-firstname-lastname`
+   - Attorney: `https://www.example.com/#attorney-firstname-lastname` — **this is the default, not the only option.** The Person `@id` is configurable via the `person_id` block (`base` / `fragment` / `append_slug`) and built by `Firm_Legal_Schema_Base::build_person_id()`. Non-law-firm and single-owner sites typically use `{profile-url}/#person` instead. Always match whatever the person's profile page already declares.
    - Page-specific entities: `{permalink}#{type}` (e.g., `{permalink}#blogposting`, `{permalink}#breadcrumb`)
 
 4. **Author Person entities are lightweight on blog posts.** They include only `name`, `url`, and `worksFor` — full bio, credentials, and `sameAs` live on the attorney profile page, NOT on every blog post. The `@id` must match the profile page for entity continuity.

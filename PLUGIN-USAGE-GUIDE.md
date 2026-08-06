@@ -1,6 +1,6 @@
 # Plugin Usage Guide — Law Firm Legal Schema Suite
 
-End-to-end walkthrough for packaging, installing, configuring, updating, and testing the plugin. Written for a deployment to a WordPress site hosted under DirectAdmin (e.g., `austinbankruptcylawyers.com`).
+End-to-end walkthrough for packaging, installing, configuring, updating, and testing the plugin. Written for a deployment to a WordPress site hosted under DirectAdmin (e.g., `example.com`).
 
 ---
 
@@ -85,7 +85,7 @@ Before uploading, confirm the sitewide `LegalService #organization` schema is ru
 
 ### Upload via WordPress admin
 
-1. Log in to WordPress admin: `https://www.austinbankruptcylawyers.com/wp-admin/`.
+1. Log in to WordPress admin: `https://www.example.com/wp-admin/`.
 2. Go to **Plugins → Add New Plugin**.
 3. Click **Upload Plugin** at the top of the page.
 4. Click **Choose File** and select `firm-legal-schema-suite.zip` from your computer.
@@ -110,7 +110,7 @@ All site-specific configuration lives in **one file**: `config/site-config.php`.
 The path depends on the host's layout, but it's typically one of:
 
 ```
-domains/austinbankruptcylawyers.com/public_html/wp-content/plugins/firm-legal-schema-suite/
+domains/example.com/public_html/wp-content/plugins/firm-legal-schema-suite/
 ```
 
 or sometimes:
@@ -122,7 +122,7 @@ public_html/wp-content/plugins/firm-legal-schema-suite/
 Click through the folders one at a time:
 
 1. `domains/` (skip if your layout starts at `public_html/`)
-2. `austinbankruptcylawyers.com/`
+2. `example.com/`
 3. `public_html/`
 4. `wp-content/`
 5. `plugins/`
@@ -174,7 +174,7 @@ Example for Austin Bankruptcy:
     'primary_attorney' => array(
         'name'          => 'Jane Doe',
         'job_title'     => 'Founding Attorney',
-        'image_url'     => 'https://www.austinbankruptcylawyers.com/wp-content/uploads/.../jane-doe.webp',
+        'image_url'     => 'https://www.example.com/wp-content/uploads/.../jane-doe.webp',
         'image_caption' => '',                // auto: "Jane Doe of Austin Bankruptcy Lawyers"
         'same_as'       => array(
             'https://www.avvo.com/attorneys/...',
@@ -192,7 +192,7 @@ Example for Austin Bankruptcy:
 ),
 ```
 
-**To find the actual slug** of any page: WP admin → **Pages** → hover over the page → look at the URL preview. The slug is the last path segment before the trailing slash. For `https://www.austinbankruptcylawyers.com/es/sobre-nosotros/`, the slug is `sobre-nosotros`.
+**To find the actual slug** of any page: WP admin → **Pages** → hover over the page → look at the URL preview. The slug is the last path segment before the trailing slash. For `https://www.example.com/es/sobre-nosotros/`, the slug is `sobre-nosotros`.
 
 #### About page — primary attorney
 
@@ -306,7 +306,7 @@ Test in **Incognito / Private** mode. Browser cache can hold the old (schema-les
 
 ### 5.1 — View Source
 
-1. Open the configured page in incognito (e.g., `https://www.austinbankruptcylawyers.com/about-us/`).
+1. Open the configured page in incognito (e.g., `https://www.example.com/about-us/`).
 2. Ctrl+U to view source.
 3. Ctrl+F → search for `"@type":"AboutPage"`.
 
