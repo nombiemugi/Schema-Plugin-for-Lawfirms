@@ -111,30 +111,25 @@ abstract class Firm_Legal_Schema_Base {
     }
     
     /**
-     * Author resolution: managing-attorney override first, then ACF
-     * custom fields, then native WP author. Returns array with name,
-     * url, and @id anchor.
+     * Author resolution: fixed blog_author first, then ACF custom fields,
+     * then native WP author. Returns array with name, url, and @id anchor.
+     *
+     * NOTE: the config key is 'blog_author'. A 'managing_attorney' block
+     * also exists in site-config.php but is INERT — nothing reads it.
      */
     protected function resolve_author() {
         global $post;
-        $author_name = null;
-        $author_url  = null;
         
-        // Managing-attorney override — when configured, every blog post is
+        // Fixed author override — when configured, every blog post is
         // attributed to this person (name, url, and @id all aligned).
-        if ( ! empty( $this->config['managing_attorney']['name'] ) ) {
-            $name = $this->config['managing_attorney']['name'];
-            $url  = $this->config['managing_attorney']['url'];
-            $slug = sanitize_title( remove_accents( $name ) );
+        $author_name = ! empty( $this->config['blog_author']['name'] )
+            ? $this->config['blog_author']['name']
+            : null;
+        $author_url = ! empty( $this->config['blog_author']['url'] )
+            ? $this->config['blog_author']['url']
+            : null;
         
-            return array(
-                'name'   => $name,
-                'url'    => $url,
-                'anchor' => $this->home_url . '#attorney-' . $slug,
-            );
-        }
-        
-        if ( function_exists( 'get_field' ) ) {
+        if ( empty( $author_name ) && function_exists( 'get_field' ) ) {
             $author_name = get_field( $this->config['acf_author_name_field'], $this->post_id );
             $author_url  = get_field( $this->config['acf_author_url_field'], $this->post_id );
         }
@@ -144,14 +139,59 @@ abstract class Firm_Legal_Schema_Base {
             $author_url  = get_author_posts_url( $post->post_author );
         }
         
-        $slug   = sanitize_title( remove_accents( $author_name ) );
-        $anchor = $this->home_url . '#attorney-' . $slug;
-        
         return array(
             'name'   => $author_name,
             'url'    => $author_url,
-            'anchor' => $anchor,
+            'anchor' => $this->build_person_id( $author_name, $author_url ),
         );
+    }
+    
+    /**
+     * Single source of every Person @id. Driven by the 'person_id' config
+     * block so the same builder serves law-firm and non-law-firm sites:
+     *   base 'home'       → {home}/#attorney-{slug}
+     *   base 'author_url' → {profile-url}/#person
+     *   base 'https://…'  → {literal-url}/#person
+     *
+     * Every handler that emits a Person MUST route through here, or the
+     * blog author and the profile page will drift into two entities.
+     */
+    protected function build_person_id( $name, $profile_url = '' ) {
+        $settings = ( isset( $this->config['person_id'] ) && is_array( $this->config['person_id'] ) )
+            ? $this->config['person_id']
+            : array();
+        
+        $base        = ! empty( $settings['base'] ) ? $settings['base'] : 'home';
+        $fragment    = ! empty( $settings['fragment'] ) ? $settings['fragment'] : 'attorney';
+        $append_slug = isset( $settings['append_slug'] ) ? (bool) $settings['append_slug'] : true;
+        
+        if ( 'author_url' === $base ) {
+            $base_url = ! empty( $profile_url ) ? $profile_url : $this->home_url;
+        }
+        elseif ( 'home' === $base ) {
+            $base_url = $this->home_url;
+        }
+        else {
+            $base_url = $base;
+        }
+        
+        // Strip any existing fragment; only normalize the trailing slash on
+        // clean path URLs (a query-string permalink would break).
+        $hash_pos = strpos( $base_url, '#' );
+        if ( false !== $hash_pos ) {
+            $base_url = substr( $base_url, 0, $hash_pos );
+        }
+        if ( strpos( $base_url, '?' ) === false ) {
+            $base_url = trailingslashit( $base_url );
+        }
+        
+        $anchor = $base_url . '#' . ltrim( $fragment, '#' );
+        
+        if ( $append_slug ) {
+            $anchor .= '-' . sanitize_title( remove_accents( $name ) );
+        }
+        
+        return $anchor;
     }
     
     /**
