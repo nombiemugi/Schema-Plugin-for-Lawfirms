@@ -55,41 +55,57 @@ The `firm-legal-schema-suite.zip` is ready to upload to any WordPress law firm s
    - Set `force_language` if it's a single-language site
    - Update `acf_author_name_field` / `acf_author_url_field` if the site uses different field names
    - Update post type slugs and page slugs when adding more schema types later
-   - To credit every blog post to one managing attorney, fill in the `managing_attorney` block — see [Setting the Managing-Attorney Author](#setting-the-managing-attorney-author-exact-profile-url) below
+   - To credit every blog post to one person, fill in the `blog_author` block — see [Setting the Fixed Blog Author](#setting-the-fixed-blog-author-exact-profile-url) below
 5. Clear ALL caches (WP Rocket, Cloudflare, browser)
 6. Test a blog post URL in:
    - https://search.google.com/test/rich-results
    - https://validator.schema.org/
 7. Document the deployment in `SITE-REGISTRY.md`
 
-### Setting the Managing-Attorney Author (exact profile URL)
+### Setting the Fixed Blog Author (exact profile URL)
 
-Use this to attribute **every** blog post to one attorney (e.g. the firm's managing attorney) instead of the per-post WordPress/ACF author. The BlogPosting handler never changes between sites — only this config block does, which is what keeps it reusable.
+Use this to attribute **every** blog post to one person (the managing attorney, the business owner, the sole blog author) instead of the per-post WordPress/ACF author. The BlogPosting handler never changes between sites — only config does, which is what keeps it reusable.
 
-1. Open the attorney's **dedicated profile page** in a browser and copy its full, exact URL — e.g. `https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/`. Use the real profile page, **not** the WordPress author archive (`/author/...`).
-2. In `config/site-config.php`, fill in the `managing_attorney` block:
+> **Note:** older versions of these docs described a `managing_attorney` block. That key is **inert** — the plugin has always read `blog_author`. If a deployed config still sets `managing_attorney`, its attribution is not being applied.
+
+1. Open the person's **dedicated profile page** in a browser and copy its full, exact URL — e.g. `https://example.com/meet-the-team/jane-doe/`. Use the real profile page, **not** the WordPress author archive (`/author/...`).
+2. **View source on that page** and find the `Person` in its JSON-LD. Copy its `@id` verbatim — you need it in step 4. This is the step people skip, and skipping it is why authors silently split into two entities.
+3. In `config/site-config.php`, fill in the `blog_author` block:
    ```php
-   'managing_attorney' => array(
-       'name' => 'Kate Lincoln-Goldfinch',
-       'url'  => 'https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/',
+   'blog_author' => array(
+       'name' => 'Jane Doe',
+       'url'  => 'https://example.com/meet-the-team/jane-doe/',
    ),
    ```
-   - `name` is **required** to enable the override and is also used to build the author `@id`.
+   - `name` is **required** to enable the override.
    - `url` is the exact profile-page URL from step 1 — it becomes the author `Person`'s `url`.
-3. The plugin derives the author `@id` from the **name** as `{home}/#attorney-{slug}` — here `https://www.lincolngoldfinch.com/#attorney-kate-lincoln-goldfinch`. Confirm the attorney's own profile page declares that **same `@id`** so the graph links up. Spell `name` identically in both places (the slug is `sanitize_title( remove_accents( name ) )`).
-4. To switch back to per-post WordPress/ACF authors, set `name` to an empty string (`''`); `url` is then ignored.
-5. **Reuse on another site:** copy the plugin, then edit only this block with that site's attorney name + exact profile URL. No handler edits — ever.
-6. Clear ALL caches (WP Rocket, Cloudflare, browser) and re-run both validators on an English and (if bilingual) a Spanish post.
+4. Set `person_id` to the preset that reproduces the `@id` from step 2 **character for character**:
+   ```php
+   // Preset A — law-firm convention: https://example.com/#attorney-jane-doe
+   'person_id' => array( 'base' => 'home', 'fragment' => 'attorney', 'append_slug' => true ),
 
-The resulting author block on every blog post looks like:
+   // Preset B — anchored to the person's own bio page:
+   //            https://example.com/meet-the-team/jane-doe/#person
+   'person_id' => array( 'base' => 'author_url', 'fragment' => 'person', 'append_slug' => false ),
+
+   // Preset C — profile at a fixed URL the plugin can't derive:
+   'person_id' => array( 'base' => 'https://example.com/team/jane/', 'fragment' => 'person', 'append_slug' => false ),
+   ```
+   A mismatch here passes **both validators cleanly** while Google reads two unrelated people. Nothing in the output looks wrong, so verify it by eye against step 2.
+5. Under preset A the `@id` derives from `name`, so spell it identically in both places (the slug is `sanitize_title( remove_accents( name ) )`). Under presets B and C the `@id` derives from the **URL**, so `name` doesn't affect it — meaning a wrong `name` yields a correct-looking `@id` attached to the wrong person.
+6. To switch back to per-post WordPress/ACF authors, set `name` to an empty string (`''`); `url` is then ignored.
+7. **Reuse on another site:** copy the plugin, then edit only `blog_author` + `person_id` for that site. No handler edits — ever.
+8. Clear ALL caches (WP Rocket, Cloudflare, browser) and re-run both validators on an English and (if bilingual) a Spanish post.
+
+The resulting author block on every blog post, using preset B:
 
 ```json
 {
   "@type": "Person",
-  "@id": "https://www.lincolngoldfinch.com/#attorney-kate-lincoln-goldfinch",
-  "name": "Kate Lincoln-Goldfinch",
-  "url": "https://www.lincolngoldfinch.com/meet-our-team/kate-lincoln-goldfinch/",
-  "worksFor": { "@id": "https://www.lincolngoldfinch.com/#organization" }
+  "@id": "https://example.com/meet-the-team/jane-doe/#person",
+  "name": "Jane Doe",
+  "url": "https://example.com/meet-the-team/jane-doe/",
+  "worksFor": { "@id": "https://example.com/#organization" }
 }
 ```
 
