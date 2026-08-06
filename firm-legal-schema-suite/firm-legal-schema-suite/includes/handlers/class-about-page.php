@@ -168,7 +168,7 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
             '@id'      => $this->build_attorney_id( $attorney['name'] ),
             'name'     => $attorney['name'],
             'jobTitle' => ! empty( $attorney['job_title'] ) ? $attorney['job_title'] : 'Attorney',
-            'url'      => $this->permalink,
+            'url'      => $this->attorney_profile_url(),
             'image'    => $image,
             'worksFor' => array(
                 '@type' => array( 'LegalService' ),
@@ -213,15 +213,33 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
 
     /**
      * Build the canonical attorney @id from a display name.
-     * Matches the convention used by class-blog-posting.php and the
-     * eventual dedicated Attorney handler.
+     * Delegates to the shared builder so the 'person_id' config block
+     * governs this handler exactly as it governs the blog author and the
+     * dedicated Attorney handler.
      *
      * @param string $name
      * @return string
      */
     protected function build_attorney_id( $name ) {
-        $slug = sanitize_title( remove_accents( $name ) );
-        return $this->home_url . '#attorney-' . $slug;
+        return $this->build_person_id( $name, $this->attorney_profile_url() );
+    }
+
+
+    /**
+     * The URL that represents the attorney as a person. Defaults to the
+     * About page itself; a configured primary_attorney.profile_url wins
+     * when the bio actually lives on its own page.
+     *
+     * @return string
+     */
+    protected function attorney_profile_url() {
+        $attorney = $this->get_primary_attorney();
+
+        if ( $attorney && ! empty( $attorney['profile_url'] ) ) {
+            return $attorney['profile_url'];
+        }
+
+        return $this->permalink;
     }
 
 
@@ -245,6 +263,7 @@ class Firm_Legal_About_Page extends Firm_Legal_Schema_Base {
         return array(
             'name'          => $name,
             'job_title'     => isset( $raw['job_title'] ) ? trim( (string) $raw['job_title'] ) : '',
+            'profile_url'   => isset( $raw['profile_url'] ) ? trim( (string) $raw['profile_url'] ) : '',
             'image_url'     => isset( $raw['image_url'] ) ? trim( (string) $raw['image_url'] ) : '',
             'image_caption' => isset( $raw['image_caption'] ) ? trim( (string) $raw['image_caption'] ) : '',
             'same_as'       => isset( $raw['same_as'] ) ? $this->sanitize_same_as( $raw['same_as'] ) : array(),

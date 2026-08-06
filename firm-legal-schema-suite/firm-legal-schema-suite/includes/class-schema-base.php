@@ -148,15 +148,81 @@ abstract class Firm_Legal_Schema_Base {
             $author_url  = get_author_posts_url( $post->post_author );
         }
 
-        // Build attorney anchor matching profile page convention
-        $slug   = sanitize_title( remove_accents( $author_name ) );
-        $anchor = $this->home_url . '#attorney-' . $slug;
+        // Build the person anchor matching the profile page convention
+        $anchor = $this->build_person_id( $author_name, $author_url );
 
         return array(
             'name'   => $author_name,
             'url'    => $author_url,
             'anchor' => $anchor,
         );
+    }
+
+
+    /**
+     * Build the canonical @id for a Person, driven by the 'person_id'
+     * config block. Every handler that emits a Person must route through
+     * here so the blog author, the attorney/bio page, and the About page
+     * mention all resolve to the SAME @id.
+     *
+     * The 'base' setting decides what the fragment is appended to:
+     *   'home'       — home_url (legacy law-firm convention)
+     *   'author_url' — the person's own profile URL ($profile_url below)
+     *   'https://…'  — any literal URL, for profiles hosted elsewhere
+     *
+     * Examples:
+     *   base 'home',       fragment 'attorney', append_slug true
+     *     → https://site.com/#attorney-jane-doe
+     *   base 'author_url', fragment 'person',   append_slug false
+     *     → https://site.com/about-me/#person
+     *   base 'https://other.com/bio/', fragment 'person', append_slug false
+     *     → https://other.com/bio/#person
+     *
+     * @param string $name        Display name (only used when append_slug is on).
+     * @param string $profile_url The person's profile URL, for base 'author_url'.
+     * @return string
+     */
+    protected function build_person_id( $name, $profile_url = '' ) {
+
+        $settings = ( isset( $this->config['person_id'] ) && is_array( $this->config['person_id'] ) )
+            ? $this->config['person_id']
+            : array();
+
+        $base        = ! empty( $settings['base'] ) ? $settings['base'] : 'home';
+        $fragment    = ! empty( $settings['fragment'] ) ? $settings['fragment'] : 'attorney';
+        $append_slug = isset( $settings['append_slug'] ) ? (bool) $settings['append_slug'] : true;
+
+        if ( 'author_url' === $base ) {
+            // Fall back to home when the profile URL is missing, so the @id
+            // is never malformed.
+            $base_url = ! empty( $profile_url ) ? $profile_url : $this->home_url;
+        }
+        elseif ( 'home' === $base ) {
+            $base_url = $this->home_url;
+        }
+        else {
+            $base_url = $base;
+        }
+
+        // Drop any fragment already present on the base URL — we append our own.
+        $hash_pos = strpos( $base_url, '#' );
+        if ( false !== $hash_pos ) {
+            $base_url = substr( $base_url, 0, $hash_pos );
+        }
+
+        // Only normalize the trailing slash on clean path URLs; query-string
+        // permalinks (?author=1) would break if a slash were appended.
+        if ( strpos( $base_url, '?' ) === false ) {
+            $base_url = trailingslashit( $base_url );
+        }
+
+        $anchor = $base_url . '#' . ltrim( $fragment, '#' );
+
+        if ( $append_slug ) {
+            $anchor .= '-' . sanitize_title( remove_accents( $name ) );
+        }
+
+        return $anchor;
     }
 
 
